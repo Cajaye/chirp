@@ -1,4 +1,4 @@
-import { SignInButton, SignOutButton, SignUp, useUser } from "@clerk/nextjs";
+import { SignInButton, SignOutButton, SignIn, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
@@ -6,7 +6,9 @@ import Link from "next/link";
 import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  const { data } = api.posts.getAll.useQuery();
+  console.log(data);
+  
 
   const user = useUser();
 
@@ -24,7 +26,9 @@ const Home: NextPage = () => {
           {!!user.isSignedIn && <SignOutButton />}
         </div>
 
-        <SignUp path="/sign-up" routing="path" signInUrl="/sign-in" />
+        <div>
+          {data?.map((post) => (<div key={post.id}>{ post.content }</div>))}
+        </div>
       </main>
     </>
   );
