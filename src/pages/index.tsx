@@ -10,6 +10,7 @@ dayjs.extend(relativeTime);
 
 import { api } from "~/utils/api";
 import type { RouterOutputs } from "~/utils/api";
+import { LoadingPage } from "~/components/loading";
 
 const CreatePostWizzard = () => {
   const { user } = useUser();
@@ -61,13 +62,28 @@ const PostView = (props: PostWithUser) => {
   );
 };
 
+const Feed = () => {
+  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
+
+  if (postsLoading) return <LoadingPage />
+  
+  if(!data) return <div>Something went wrong...</div>
+  
+  return (
+    <div>
+            {[...data, ...data].map((fullPost) => (
+              <PostView {...fullPost} key={fullPost.post.id} />
+            ))}
+          </div>
+  )
+}
+
 const Home: NextPage = () => {
-  const { data, isLoading } = api.posts.getAll.useQuery();
-  const user = useUser();
+  api.posts.getAll.useQuery();
 
-  if (isLoading) <div>{"Loading..."}</div>;
-
-  if (!data) <div>{"Something went wrong..."}</div>;
+  const {isLoaded: userLoaded, isSignedIn } = useUser();
+  
+  if(!userLoaded) return <div/>
 
   return (
     <>
@@ -79,19 +95,15 @@ const Home: NextPage = () => {
       <main className="flex h-screen justify-center">
         <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
           <div className="flex border-b border-slate-200 p-4">
-            {!user.isSignedIn && (
+            {!isSignedIn && (
               <div className="flex justify-center">
                 <SignInButton />
               </div>
             )}
 
-            {!!user.isSignedIn && <CreatePostWizzard />}
+            {!!isSignedIn && <CreatePostWizzard />}
           </div>
-          <div>
-            {[...(data || []), ...(data || [])].map((fullPost) => (
-              <PostView {...fullPost} key={fullPost.post.id} />
-            ))}
-          </div>
+          <Feed/>
         </div>
       </main>
     </>
