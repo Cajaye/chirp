@@ -12,7 +12,6 @@ import { api } from "~/utils/api";
 import type { RouterOutputs } from "~/utils/api";
 import { LoadingPage } from "~/components/loading";
 import { useState } from "react";
-import { contextProps } from "@trpc/react-query/shared";
 
 const CreatePostWizzard = () => {
   const { user } = useUser();
