@@ -11,9 +11,25 @@ dayjs.extend(relativeTime);
 import { api } from "~/utils/api";
 import type { RouterOutputs } from "~/utils/api";
 import { LoadingPage } from "~/components/loading";
+import { useState } from "react";
+import { contextProps } from "@trpc/react-query/shared";
 
 const CreatePostWizzard = () => {
   const { user } = useUser();
+
+  const ctx = api.useContext();
+
+  const { mutate, isLoading:isPosting } = api.posts.create.useMutation({
+    onError: (e) => {
+      console.log(e.message);
+    },
+    onSuccess: (_data) => {
+      setInput("");
+      void ctx.posts.getAll.invalidate();
+    }
+  });
+
+  const [input, setInput] = useState<string>("");
 
   if (!user) return null;
 
@@ -29,7 +45,11 @@ const CreatePostWizzard = () => {
       <input
         className="grow bg-transparent outline-none"
         placeholder="Type some emojis!"
+        value={input}
+        disabled={isPosting}
+        onChange={(e) => setInput(e.target.value)}
       />
+      <button className="" type="submit" onClick={() => mutate({content:input})}>Post</button>
     </div>
   );
 };
@@ -71,7 +91,7 @@ const Feed = () => {
   
   return (
     <div>
-            {[...data, ...data].map((fullPost) => (
+            {data.map((fullPost) => (
               <PostView {...fullPost} key={fullPost.post.id} />
             ))}
           </div>
