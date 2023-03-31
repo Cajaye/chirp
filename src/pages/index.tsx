@@ -11,7 +11,6 @@ dayjs.extend(relativeTime);
 import { api } from "~/utils/api";
 import type { RouterOutputs } from "~/utils/api";
 import { LoadingPage } from "~/components/loading";
-import PopupPage from "~/components/popup";
 
 const CreatePostWizzard = () => {
   const { user } = useUser();
