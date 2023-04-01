@@ -2,6 +2,7 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -10,22 +11,29 @@ dayjs.extend(relativeTime);
 
 import { api } from "~/utils/api";
 import type { RouterOutputs } from "~/utils/api";
-import { LoadingPage } from "~/components/loading";
+import { LoadingPage, LoadingSpinner } from "~/components/loading";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const CreatePostWizzard = () => {
   const { user } = useUser();
 
   const ctx = api.useContext();
 
-  const { mutate, isLoading:isPosting } = api.posts.create.useMutation({
-    onError: (e) => {
-      console.log(e.message);
-    },
-    onSuccess: (_data) => {
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
       setInput("");
       void ctx.posts.getAll.invalidate();
-    }
+    },
+
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Failed to post, please try again later!");
+      }
+    },
   });
 
   const [input, setInput] = useState<string>("");
@@ -47,8 +55,23 @@ const CreatePostWizzard = () => {
         value={input}
         disabled={isPosting}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (input !== "") {
+              mutate({ content: input })
+            }
+          }
+        }}
       />
-      <button className="" type="submit" onClick={() => mutate({content:input})}>Post</button>
+      {input !== "" && !isPosting && (
+          <button type="submit" onClick={() => mutate({ content: input })}>Post</button>
+      )}
+      {isPosting && (
+        <div className="flex justify-center items-center">
+          <LoadingSpinner size={20} />
+        </div>
+      )}
     </div>
   );
 };
@@ -72,8 +95,12 @@ const PostView = (props: PostWithUser) => {
       />
       <div className="flex flex-col">
         <div className="flex items-center text-slate-300 gap-1">
-          <span>{`@${author.username}`}</span>
-          <span className="font-thin text-xs">{` · ${dayjs(post.createdAt).fromNow()}`}</span>
+          <Link href={`/@${author.username}`}>
+            <span>{`@${author.username}`}</span>
+          </Link>
+          <Link href={`/post/${post.id}`}>
+            <span className="font-thin text-xs">{` · ${dayjs(post.createdAt).fromNow()}`}</span>
+            </Link>
         </div>
         <span>{post.content}</span>
       </div>
