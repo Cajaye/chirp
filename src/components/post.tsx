@@ -18,6 +18,7 @@ const PostView = (props: PostWithUser) => {
       key={post.id}
     >
       <Image
+        priority
         className="h-14 w-14 rounded-full"
         src={author.profileImageUrl}
         alt="avatar"
